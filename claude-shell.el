@@ -118,6 +118,21 @@ For example:
   :type 'boolean
   :group 'claude-shell)
 
+(defcustom claude-shell-after-command-functions nil
+  "Abnormal hook (i.e. with parameters) invoked after each command.
+
+This is useful if you'd like to automatically handle or suggest things
+post execution.
+
+For example:
+
+\(add-hook `claude-shell-after-command-functions'
+   (lambda (command output)
+     (message \"Command: %s\" command)
+     (message \"Output: %s\" output)))"
+  :type 'hook
+  :group 'claude-shell)
+
 (defvar claude-shell--api-version "2023-06-01")
 
 (defun claude-shell--curl-flags ()
@@ -141,19 +156,23 @@ The OBJECT will be JSON encoded and sent as HTTP POST data."
             (claude-shell--curl-flags)
             `("--data" ,(format "@%s" json-path)))))
 
-(defun claude-shell--prompt (prompt)
-  "Submit the given PROMPT to the Anthropic API.
+(defun claude-shell--make-payload (history)
+  "Submit the given HISTORY to the Anthropic API.
 
-Returns the JSON response as a string. See
+Returns the payload as a Lisp structure for serialization into json. See
 https://docs.anthropic.com/claude/reference/messages_post for the
 interpretation."
 
-  `(:max_tokens  1024
-    :model ,claude-shell-model
-    :system ,(cdr claude-shell-system-prompt)
-    :messages [(:role "user"
-                :content ,(substring-no-properties prompt))]
-    :stream ,(if claude-shell-streaming 't :false)))
+  (let ((history (mapcan (lambda (l)
+                           `((:role "user" :content ,(car l)) (:role "assistant" :content ,(cdr l))))
+                         (butlast history)))
+        (command `((:role "user" :content ,(caar (last history))))))
+
+    `(:max_tokens  1024
+      :model ,claude-shell-model
+      :system ,(cdr claude-shell-system-prompt)
+      :messages ,(vconcat (append history command))
+      :stream ,(if claude-shell-streaming 't :false))))
 
 (defun claude-shell--extract-claude-response (json)
   "Extract Claude response from JSON."
@@ -189,9 +208,11 @@ or
 
 (setq claude-shell-api-token \"my-key\")"))
    :execute-command
-   (lambda (command _history callback error-callback)
+   (lambda (_command history callback error-callback)
      (shell-maker-async-shell-command
-      (claude-shell--call-api (claude-shell--prompt command))
+      (progn
+        (with-current-buffer-window "*scratch*" 'nil 'nil (insert (pp history)))
+        (claude-shell--call-api (claude-shell--make-payload history)))
       claude-shell-streaming
       #'claude-shell--extract-claude-response
       callback
@@ -199,7 +220,7 @@ or
    :on-command-finished
    (lambda (command output)
      (claude-shell-fontifier--put-source-block-overlays)
-     (run-hook-with-args 'chatgpt-shell-after-command-functions
+     (run-hook-with-args 'claude-shell-after-command-functions
                          command output))
    :redact-log-output
    (lambda (output)
