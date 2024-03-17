@@ -110,8 +110,11 @@ For example:
   :type (append '(choice)
                 (mapcar (lambda (prompt) `(const :doc ,(cdr prompt) ,(car prompt)))
                         claude-shell-system-prompts))
-  :get (lambda (symbol) (assoc-string (symbol-value symbol) claude-shell-system-prompts))
   :group 'claude-shell)
+
+(defun claude-shell-system-prompt ()
+  "Get the system prompt value."
+  (assoc-string claude-shell-system-prompt claude-shell-system-prompts))
 
 (defcustom claude-shell-streaming 'nil
   "Whether or not to stream Anthropic responses (show chunks as they arrive)."
@@ -134,6 +137,34 @@ For example:
   :group 'claude-shell)
 
 (defvar claude-shell--api-version "2023-06-01")
+
+(defun claude-shell-duplicate-map-keys (map)
+  "Return duplicate keys in MAP."
+  (let ((keys (map-keys map))
+        (seen '())
+        (duplicates '()))
+    (dolist (key keys)
+      (if (member key seen)
+          (push key duplicates)
+        (push key seen)))
+    duplicates))
+
+(defun claude-shell-swap-system-prompt ()
+  "Swap system prompt from `claude-shell-system-prompts'."
+  (interactive)
+  (unless (eq major-mode 'claude-shell-mode)
+    (user-error "Not in a shell"))
+  (when-let ((duplicates (claude-shell-duplicate-map-keys claude-shell-system-prompts)))
+    (user-error "Duplicate prompt names found %s. Please remove" duplicates))
+  (let* ((choices (append (list "None")
+                          (map-keys claude-shell-system-prompts)))
+         (choice (completing-read "System prompt: " choices)))
+    (if (or (string-equal choice "None")
+            (string-empty-p (string-trim choice)))
+        (customize-set-value 'claude-shell-system-prompt nil)
+      (customize-set-value 'claude-shell-system-prompt choice)))
+  (claude-shell--update-prompt)
+  (shell-maker-interrupt nil))
 
 (defun claude-shell--curl-flags ()
   "Collect flags for a `curl' command to call the Anthropic API."
@@ -170,9 +201,14 @@ interpretation."
 
     `(:max_tokens  1024
       :model ,claude-shell-model
-      :system ,(cdr claude-shell-system-prompt)
+      :system ,(cdr (claude-shell-system-prompt))
       :messages ,(vconcat (append history command))
       :stream ,(if claude-shell-streaming 't :false))))
+
+(defun claude-shell--update-prompt ()
+  "Update the `shell-maker' prompt."
+  (let ((shell-prompt (format "Claude(%s/%s)> " claude-shell-model (car (claude-shell-system-prompt)))))
+    (shell-maker-set-prompt shell-prompt (concat "^" shell-prompt))))
 
 (defun claude-shell--extract-claude-response (json)
   "Extract Claude response from JSON."
@@ -196,7 +232,7 @@ interpretation."
 (defvar claude-shell--config
   (make-shell-maker-config
    :name "Claude"
-   :prompt (format "Claude(%s/%s)> " claude-shell-model (car claude-shell-system-prompt))
+   :prompt (format "Claude(%s/%s)> " claude-shell-model (car (claude-shell-system-prompt)))
    :validate-command
    (lambda (_command)
      (unless claude-shell-api-token
@@ -228,14 +264,12 @@ or
                                    output)
        output))))
 
-;;; FastGPT shell
-
 ;;;###autoload
 (defun claude-shell ()
   "Start an FastGPT shell."
   (interactive)
-  (shell-maker-start claude-shell--config))
-
+  (shell-maker-start claude-shell--config)
+  (claude-shell--update-prompt))
 
 (provide 'claude-shell)
 ;;; claude-shell.el ends here
