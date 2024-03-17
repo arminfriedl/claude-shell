@@ -43,6 +43,8 @@
 
 (require 'shell-maker)
 
+(load-file "claude-shell-fontifier.el")
+
 (defcustom claude-shell-api-token nil
   "The Anthropic API token as a string or a function that loads and returns it.
 
@@ -150,7 +152,7 @@ interpretation."
     :model ,claude-shell-model
     :system ,(cdr claude-shell-system-prompt)
     :messages [(:role "user"
-                :content ,prompt)]
+                :content ,(substring-no-properties prompt))]
     :stream ,(if claude-shell-streaming 't :false)))
 
 (defun claude-shell--extract-claude-response (json)
@@ -168,7 +170,8 @@ interpretation."
              (let-alist (seq-first .content) .text))))
       (if-let (parsed-error (shell-maker--json-parse-string-filtering
                              json "^curl:.*\n?"))
-          (let-alist parsed-error .error.message)))))
+          (let-alist parsed-error
+            .error.message)))))
 
 
 (defvar claude-shell--config
@@ -195,7 +198,7 @@ or
       error-callback))
    :on-command-finished
    (lambda (command output)
-     (chatgpt-shell--put-source-block-overlays)
+     (claude-shell-fontifier--put-source-block-overlays)
      (run-hook-with-args 'chatgpt-shell-after-command-functions
                          command output))
    :redact-log-output
