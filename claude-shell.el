@@ -43,7 +43,7 @@
 
 (require 'shell-maker)
 
-(load-file "claude-shell-fontifier.el")
+(require 'claude-shell-fontifier)
 
 (defcustom claude-shell-api-token nil
   "The Anthropic API token as a string or a function that loads and returns it.

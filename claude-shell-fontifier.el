@@ -468,4 +468,5 @@ Use QUOTES1-START QUOTES1-END LANG LANG-START LANG-END BODY-START
        (car (map-elt inline-code 'body))
        (cdr (map-elt inline-code 'body))))))
 
+(provide 'claude-shell-fontifier)
 ;;; claude-shell-fontifier.el ends here
