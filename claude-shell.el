@@ -210,9 +210,7 @@ or
    :execute-command
    (lambda (_command history callback error-callback)
      (shell-maker-async-shell-command
-      (progn
-        (with-current-buffer-window "*scratch*" 'nil 'nil (insert (pp history)))
-        (claude-shell--call-api (claude-shell--make-payload history)))
+        (claude-shell--call-api (claude-shell--make-payload history))
       claude-shell-streaming
       #'claude-shell--extract-claude-response
       callback
