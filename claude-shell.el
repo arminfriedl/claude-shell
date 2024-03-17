@@ -63,7 +63,7 @@ https://console.anthropic.com/settings/keys"
 See also
 https://docs.anthropic.com/claude/docs/models-overview#model-comparison")
 
-(defcustom claude-shell-model "claude-3-opus-20240229"
+(defcustom claude-shell-model "claude-3-haiku-20240307"
   "Which model to use."
   :type (append '(choice)
                 (mapcar (lambda (engine) `(const :doc ,(cdr engine) ,(car engine)))
@@ -108,6 +108,7 @@ For example:
   :type (append '(choice)
                 (mapcar (lambda (prompt) `(const :doc ,(cdr prompt) ,(car prompt)))
                         claude-shell-system-prompts))
+  :get (lambda (symbol) (assoc-string (symbol-value symbol) claude-shell-system-prompts))
   :group 'claude-shell)
 
 (defcustom claude-shell-streaming 'nil
@@ -147,6 +148,7 @@ interpretation."
 
   `(:max_tokens  1024
     :model ,claude-shell-model
+    :system ,(cdr claude-shell-system-prompt)
     :messages [(:role "user"
                 :content ,prompt)]
     :stream ,(if claude-shell-streaming 't :false)))
@@ -172,7 +174,7 @@ interpretation."
 (defvar claude-shell--config
   (make-shell-maker-config
    :name "Claude"
-   :prompt (format "Claude(%s/%s)> " claude-shell-model claude-shell-system-prompt)
+   :prompt (format "Claude(%s/%s)> " claude-shell-model (car claude-shell-system-prompt))
    :validate-command
    (lambda (_command)
      (unless claude-shell-api-token
