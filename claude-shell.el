@@ -1,11 +1,10 @@
-;;; claude-shell.el --- Claude API integration -*- lexical-binding: t; -*-
+;;; claude-shell.el --- Integration with Anthropic's Claude LLM -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2024 Armin Friedl
 ;;
 ;; Author: Armin Friedl <dev@friedl.net>
 ;; Maintainer: Armin Friedl <dev@friedl.net>
 ;; Created: März 16, 2024
-;; Modified: März 16, 2024
 ;; Version: 0.0.1
 ;; Keywords: anthropic claude shell-maker terminals wp help tools
 ;; Homepage: https://github.com/arminfriedl/claude-shell
@@ -37,7 +36,19 @@
 
 ;;; Commentary:
 ;;
-;;  Description
+;; `claude-shell' is a comint-based shell to interact with Antrophic's Claude
+;; AI. It is based on `shell-maker' providing a convenience layer on top of
+;; comint. It strives to be similar in functionality and spirit to
+;; `chatgpt-shell' (https://github.com/xenodium/chatgpt-shell) just for Claude
+;; models.
+;;
+;; `claude-shell' provides an interactive chat with Claude in a dedictated shell
+;; buffer. It also integrates with the rest of Emacs to allow conveniently
+;; calling out to Claude on-demand. Similar to a copilot.
+;;
+;; You must set `claude-shell-api-token' to your API token before using it.
+;;
+;; Run `claude-shell' to get an interactive Claude shell.
 ;;
 ;;; Code:
 
