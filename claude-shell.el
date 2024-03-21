@@ -43,8 +43,8 @@
 ;; models.
 ;;
 ;; `claude-shell' provides an interactive chat with Claude in a dedictated shell
-;; buffer. It also integrates with the rest of Emacs to allow conveniently
-;; calling out to Claude on-demand. Similar to a copilot.
+;; buffer. It also integrates with the rest of Emacs to allow seamlessly calling
+;; out to Claude on-demand. Similar to the many AI copilots around.
 ;;
 ;; You must set `claude-shell-api-token' to your API token before using it.
 ;;
@@ -53,19 +53,13 @@
 ;;; Code:
 
 (require 'shell-maker)
-
 (require 'claude-shell-fontifier)
-
-(defcustom claude-shell-api-token nil
-  "The Anthropic API token as a string or a function that loads and returns it.
-
-The token can be generated inside your account at
-https://console.anthropic.com/settings/keys"
-  :type '(choice string function)
-  :group 'claude-shell)
 
 (defvar claude-shell--api-url "https://api.anthropic.com/v1/messages"
   "The Anthropic API entry point.")
+
+(defvar claude-shell--api-version "2023-06-01"
+  "The Anthropic API version.")
 
 (defvar claude-shell--models
   '(("claude-3-haiku-20240307" . "Fastest and most compact model for near-instant responsiveness.")
@@ -75,6 +69,14 @@ https://console.anthropic.com/settings/keys"
 
 See also
 https://docs.anthropic.com/claude/docs/models-overview#model-comparison")
+
+(defcustom claude-shell-api-token nil
+  "The Anthropic API token as a string or a function that loads and returns it.
+
+The token can be generated inside your account at
+https://console.anthropic.com/settings/keys"
+  :type '(choice string function)
+  :group 'claude-shell)
 
 (defcustom claude-shell-model "claude-3-haiku-20240307"
   "Which model to use."
@@ -123,10 +125,6 @@ For example:
                         claude-shell-system-prompts))
   :group 'claude-shell)
 
-(defun claude-shell-system-prompt ()
-  "Get the system prompt value."
-  (assoc-string claude-shell-system-prompt claude-shell-system-prompts))
-
 (defcustom claude-shell-streaming 'nil
   "Whether or not to stream Anthropic responses (show chunks as they arrive)."
   :type 'boolean
@@ -147,21 +145,12 @@ For example:
   :type 'hook
   :group 'claude-shell)
 
-(defvar claude-shell--api-version "2023-06-01")
-
-(defun claude-shell-duplicate-map-keys (map)
-  "Return duplicate keys in MAP."
-  (let ((keys (map-keys map))
-        (seen '())
-        (duplicates '()))
-    (dolist (key keys)
-      (if (member key seen)
-          (push key duplicates)
-        (push key seen)))
-    duplicates))
+(defun claude-shell-system-prompt ()
+  "Get the currently chosen value for the system prompt."
+  (assoc-string claude-shell-system-prompt claude-shell-system-prompts))
 
 (defun claude-shell-swap-system-prompt ()
-  "Swap system prompt from `claude-shell-system-prompts'."
+  "Change system prompt choice from `claude-shell-system-prompts'."
   (interactive)
   (unless (eq major-mode 'claude-shell-mode)
     (user-error "Not in a shell"))
@@ -176,6 +165,18 @@ For example:
       (customize-set-value 'claude-shell-system-prompt choice)))
   (claude-shell--update-prompt)
   (shell-maker-interrupt nil))
+
+
+(defun claude-shell-duplicate-map-keys (map)
+  "Return duplicate keys in MAP."
+  (let ((keys (map-keys map))
+        (seen '())
+        (duplicates '()))
+    (dolist (key keys)
+      (if (member key seen)
+          (push key duplicates)
+        (push key seen)))
+    duplicates))
 
 (defun claude-shell--curl-flags ()
   "Collect flags for a `curl' command to call the Anthropic API."
