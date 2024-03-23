@@ -166,6 +166,40 @@ For example:
   (claude-shell--update-prompt)
   (shell-maker-interrupt nil))
 
+(defun claude-shell--load-awesome-prompts-parse-alist ()
+  "Helper function for `claude-shell-load-awesome-prompts'.
+
+Download awesome-prompts and parse into a list of label and
+prompt cons."
+  (let ((url "https://raw.githubusercontent.com/f/awesome-chatgpt-prompts/main/prompts.csv")
+        (collector '()))
+    (with-current-buffer (url-retrieve-synchronously url)
+      (goto-char url-http-end-of-headers)
+      (forward-line 2)
+      (while (not (eobp))
+        (let* ((line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+               (split (split-string line "," 'nil "\""))
+               (head (car split))
+               (tail (apply #'concat (cdr split))))
+          (push (cons head tail) collector)
+          (forward-line 1))))
+    collector))
+
+
+(defun claude-shell-load-awesome-prompts ()
+  "Load `claude-shell-system-prompts' from awesome-chatgpt-prompts.
+
+Downloaded from https://github.com/f/awesome-chatgpt-prompts."
+  (interactive)
+  (let ((prompts (claude-shell--load-awesome-prompts-parse-alist)))
+    (setq claude-shell-system-prompts
+          (map-merge 'list
+                     claude-shell-system-prompts
+                     (seq-sort (lambda (lhs rhs) (string-lessp (car lhs) (car rhs))) prompts)))
+    (message "Loaded awesome-chatgpt-prompts")
+    (setq claude-shell-system-prompt nil)
+    (claude-shell-swap-system-prompt)))
+
 
 (defun claude-shell-duplicate-map-keys (map)
   "Return duplicate keys in MAP."
