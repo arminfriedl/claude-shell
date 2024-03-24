@@ -259,22 +259,18 @@ interpretation."
 
 (defun claude-shell--extract-claude-response (json)
   "Extract Claude response from JSON."
-  (if (eq (type-of json) 'cons)
-      (let-alist json ;; already parsed
-        (or (unless (seq-empty-p .content)
-              (let-alist (seq-first .content) .text))
-            .error.message
-            ""))
-    (if-let (parsed (shell-maker--json-parse-string json))
-        (string-trim
-         (let-alist parsed
-           (unless (seq-empty-p .content)
-             (let-alist (seq-first .content) .text))))
-      (if-let (parsed-error (shell-maker--json-parse-string-filtering
-                             json "^curl:.*\n?"))
-          (let-alist parsed-error
-            .error.message)))))
 
+  (let ((parsed (cond
+                 ((eq (type-of json) 'cons) json)
+                 (t (shell-maker--json-parse-string json)))))
+    (let-alist parsed
+      (string-trim
+       (or (unless (seq-empty-p .content)
+             (let-alist (seq-first .content) .text))
+           (progn
+             (message "Claude API error:\n\t%s" json)
+             (format "Error: %s" .error.message))
+           "")))))
 
 (defvar claude-shell--config
   (make-shell-maker-config
@@ -293,7 +289,7 @@ or
    :execute-command
    (lambda (_command history callback error-callback)
      (shell-maker-async-shell-command
-        (claude-shell--call-api (claude-shell--make-payload history))
+      (claude-shell--call-api (claude-shell--make-payload history))
       claude-shell-streaming
       #'claude-shell--extract-claude-response
       callback
