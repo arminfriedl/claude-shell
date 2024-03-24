@@ -274,13 +274,17 @@ interpretation."
                  ((eq (type-of json) 'cons) json)
                  (t (shell-maker--json-parse-string json)))))
     (let-alist parsed
-      (string-trim
        (or (unless (seq-empty-p .content)
              (let-alist (seq-first .content) .text))
-           (progn
-             (message "Claude API error:\n\t%s" json)
-             (format "Error: %s" .error.message))
-           "")))))
+           (when .content_block.text
+             .content_block.text)
+           (when .delta.text
+             .delta.text)
+           (when .error.message
+             (progn
+               (message "Claude API error:\n\t%s" json)
+               (format "Error: %s" .error.message)))
+           ""))))
 
 (defvar claude-shell--config
   (make-shell-maker-config
@@ -317,6 +321,15 @@ or
                                    output)
        output))))
 
+(defun claude-shell--shell-maker-preparse-json-advice (args)
+  "Test ARGS."
+  (list (replace-regexp-in-string (rx bol (| "event: message_start"
+                                             "event: content_block_start"
+                                             "event: content_block_stop"
+                                             "event: message_delta"
+                                             "event: message_stop") anychar eol)
+                                  "" (car args))))
+
 ;;;###autoload
 (defun claude-shell ()
   "Start an FastGPT shell."
@@ -326,7 +339,8 @@ or
   (define-key claude-shell-mode-map (kbd "C-c C-v")
               #'claude-shell-swap-model)
   (define-key claude-shell-mode-map (kbd "C-c C-s")
-              #'claude-shell-swap-system-prompt))
+              #'claude-shell-swap-system-prompt)
+  (add-function :filter-args (symbol-function 'shell-maker--preparse-json) #'claude-shell--shell-maker-preparse-json-advice))
 
 (provide 'claude-shell)
 ;;; claude-shell.el ends here
