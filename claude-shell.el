@@ -149,6 +149,16 @@ For example:
   "Get the currently chosen value for the system prompt."
   (assoc-string claude-shell-system-prompt claude-shell-system-prompts))
 
+(defun claude-shell-swap-model ()
+  "Change model from `claude-shell--models'."
+  (interactive)
+  (unless (eq major-mode 'claude-shell-mode)
+    (user-error "Not in a shell"))
+  (let ((choice (completing-read "Model: " (map-keys claude-shell--models))))
+    (customize-set-value 'claude-shell-model choice)
+    (claude-shell--update-prompt)
+    (shell-maker-interrupt nil)))
+
 (defun claude-shell-swap-system-prompt ()
   "Change system prompt choice from `claude-shell-system-prompts'."
   (interactive)
