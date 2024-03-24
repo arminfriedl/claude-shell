@@ -322,7 +322,11 @@ or
   "Start an FastGPT shell."
   (interactive)
   (shell-maker-start claude-shell--config)
-  (claude-shell--update-prompt))
+  (claude-shell--update-prompt)
+  (define-key claude-shell-mode-map (kbd "C-c C-v")
+              #'claude-shell-swap-model)
+  (define-key claude-shell-mode-map (kbd "C-c C-s")
+              #'claude-shell-swap-system-prompt))
 
 (provide 'claude-shell)
 ;;; claude-shell.el ends here
