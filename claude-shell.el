@@ -6,7 +6,7 @@
 ;; Maintainer: Armin Friedl <dev@friedl.net>
 ;; Created: März 16, 2024
 ;; Version: 0.0.1
-;; Keywords: anthropic claude shell-maker terminals wp help tools
+;; Keywords: anthropic claude claude-shell shell-maker terminals wp help tools
 ;; Homepage: https://github.com/arminfriedl/claude-shell
 ;; Package-Requires: ((emacs "29.1") (shell-maker "0.49.1"))
 ;;
@@ -184,7 +184,11 @@ prompt cons."
   (let ((url "https://raw.githubusercontent.com/f/awesome-chatgpt-prompts/main/prompts.csv")
         (collector '()))
     (with-current-buffer (url-retrieve-synchronously url)
-      (goto-char url-http-end-of-headers)
+
+      (goto-char (if (boundp 'url-http-end-of-headers)
+                     url-http-end-of-headers
+                   (error "`url-http-end-of-headers' marker is not defined")))
+
       (forward-line 2)
       (while (not (eobp))
         (let* ((line (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
@@ -332,14 +336,17 @@ or
 
 ;;;###autoload
 (defun claude-shell ()
-  "Start an FastGPT shell."
+  "Start a Claude shell."
   (interactive)
   (shell-maker-start claude-shell--config)
   (claude-shell--update-prompt)
-  (define-key claude-shell-mode-map (kbd "C-c C-v")
-              #'claude-shell-swap-model)
-  (define-key claude-shell-mode-map (kbd "C-c C-s")
-              #'claude-shell-swap-system-prompt)
+
+  (when (boundp 'claude-shell-mode-map) ; defined during `shell-maker-start'
+    (define-key claude-shell-mode-map (kbd "C-c C-v")
+                #'claude-shell-swap-model)
+    (define-key claude-shell-mode-map (kbd "C-c C-s")
+                #'claude-shell-swap-system-prompt))
+
   (add-function :filter-args (symbol-function 'shell-maker--preparse-json) #'claude-shell--shell-maker-preparse-json-advice))
 
 (provide 'claude-shell)

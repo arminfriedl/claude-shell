@@ -1,3 +1,54 @@
+;;; claude-shell-fontifier.el --- Fontifier for claude-shell -*- lexical-binding: t; -*-
+;;
+;; Copyright (C) 2024 Armin Friedl
+;;
+;; Author: Armin Friedl <dev@friedl.net>
+;; Maintainer: Armin Friedl <dev@friedl.net>
+;; Created: März 16, 2024
+;; Version: 0.0.1
+;; Keywords: anthropic claude claude-shell shell-maker terminals wp help tools
+;; Homepage: https://github.com/arminfriedl/claude-shell
+;; Package-Requires: ((emacs "29.1") (shell-maker "0.49.1"))
+;;
+;; This file is not part of GNU Emacs.
+
+;; MIT License
+
+;; Copyright (c) 2024 Armin Friedl
+
+;; Permission is hereby granted, free of charge, to any person obtaining a copy
+;; of this software and associated documentation files (the "Software"), to deal
+;; in the Software without restriction, including without limitation the rights
+;; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+;; copies of the Software, and to permit persons to whom the Software is
+;; furnished to do so, subject to the following conditions:
+
+;; The above copyright notice and this permission notice shall be included in all
+;; copies or substantial portions of the Software.
+
+;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;; SOFTWARE.
+
+;;; Commentary:
+;;
+;; `claude-shell-fontifier' provides fontification for the output of
+;; `claude-shell'. It is heavily based on similar function in `chatgpt-shell'
+;; (https://github.com/xenodium/chatgpt-shell/).
+;;
+;; It is intended only for internal use in `claude-shell'. This package will be
+;; removed as soon as the respective functionality is integrated in
+;; `shell-maker' proper.
+;;
+;;; Code:
+
+
+(require 'shell-maker)
+
 (defcustom claude-shell-fontifier-language-mapping '(("elisp" . "emacs-lisp")
                                                      ("objective-c" . "objc")
                                                      ("objectivec" . "objc")
