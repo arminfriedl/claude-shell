@@ -241,7 +241,8 @@ https://docs.anthropic.com/claude/reference/messages_post for the
 interpretation."
 
   (let ((history (mapcan (lambda (l)
-                           `((:role "user" :content ,(car l)) (:role "assistant" :content ,(cdr l))))
+                           (when (cdr l)
+                             `((:role "user" :content ,(car l)) (:role "assistant" :content ,(cdr l)))))
                          (butlast history)))
         (command `((:role "user" :content ,(caar (last history))))))
 
