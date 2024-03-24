@@ -5,10 +5,10 @@
 ;; Author: Armin Friedl <dev@friedl.net>
 ;; Maintainer: Armin Friedl <dev@friedl.net>
 ;; Created: März 16, 2024
-;; Version: 0.0.1
+;; Version: 0.0.2
 ;; Keywords: anthropic claude claude-shell shell-maker terminals wp help tools
 ;; Homepage: https://github.com/arminfriedl/claude-shell
-;; Package-Requires: ((emacs "29.1") (shell-maker "0.49.1"))
+;; Package-Requires: ((emacs "29.1") (shell-maker "0.50.1"))
 ;;
 ;; This file is not part of GNU Emacs.
 
