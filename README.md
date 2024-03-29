@@ -11,60 +11,113 @@ based on [`shell-maker`](https://github.com/xenodium/chatgpt-shell/).
 
 </div>
 
-`claude-shell` Provides access to all Claude 3 models (Haiku, Sonnet and Opus).
+`claude-shell` provides access to all Claude 3 models (Haiku, Sonnet and Opus).
+
 The most interesting of which is probably Haiku which provides near instant
 answers while still being of good quality. Similar in speed to Kagi's FastGPT
-while providing subjectively better answers. 
+while providing subjectively better answers.
 
 Meanwhile Opus and ChatGPT seem to fight for the crown of the best foundational
-model in general, but they tend to be sluggish enough to break the flow.
+model in general, but they tend to be sluggish enough to break one's flow.
 
-
-Everything below this line was written by Claude 3 Opus. 
-
-> Assistant: Why? 
-> User: Because. 
-
-I'll clean it up later. Promise. 🤞
-
----
+Sonnet is somewhere in the middle.
 
 ## Features
 
-- Interact with Claude directly within Emacs
-- Choose from different Claude models
-- Customize system prompts for various use cases
-- Stream responses for real-time interaction
-- Syntax highlighting for code snippets in responses
+![claude-shell usage](img/usage.gif)
+
+- Chat with Claude in a dedicated Emacs buffer
+- Switch Claude models
+- Switch system prompts and load more [awesome
+  prompts](https://github.com/f/awesome-chatgpt-prompts)
+- Response streaming
+- Syntax highlighting
 
 ## Installation
 
-1. Ensure you have Emacs 29.1 or higher installed.
-2. Install the `shell-maker` package (version 0.49.1 or higher).
-3. Clone this repository or install the `claude-shell` package from MELPA.
-4. Set your Anthropic API token:
-   ```elisp
-   (setq claude-shell-api-token "your-api-token")
-   ```
-   You can generate an API token in your Anthropic account settings: https://console.anthropic.com/settings/keys
+This package is currently awaiting inclusion in Melpa. Until then you can
+install directly from this GitHub repo.
+
+`claude-shell` needs an API token from Anthropic. You can generate one in your
+account https://console.anthropic.com/settings/keys. This must be set to
+`claude-shell-api-token` either as string or a function to fetch the token.
+
+``` elisp
+;;; Set API token directly as a string
+(setq claude-shell-api-token "sk-ant-api03-your-token")
+
+;;; Fetch API token from `auth-source` (e.g. .authinfo.gpg)
+(setq claude-shell-api-token (lambda () (auth-source-pick-first-password :host "api.anthropic.com")))
+```
+
+### Manual
+
+1. Install `shell-maker` from https://github.com/xenodium/chatgpt-shell/
+2. Clone the repository and evaluate `claude-shell-fontifier.el` and
+`claude-shell.el` in Emacs. 
+3. Then set the `claude-shell-api-token` variable to your API token. You can
+   generate an API token in your Anthropic account settings:
+   https://console.anthropic.com/settings/keys
+
+### `straight.el` and `use-package`
+
+`claude-shell` can easily be installed with
+[straight.el](https://github.com/radian-software/straight.el) and
+[use-package](https://github.com/jwiegley/use-package).
+
+``` elisp
+(use-package claude-shell
+  :straight (claude-shell :type git :host github :repo "arminfriedl/claude-shell")
+  :config
+  (setq claude-shell-api-token "sk-ant-api03-your-token"))
+
+```
+
+### Doom Emacs
+
+In your `package.el` add
+
+``` elisp
+(package! claude-shell
+  :recipe (:host github :repo "arminfriedl/claude-shell"
+          :files ("claude-shell.el" "claude-shell-fontifier.el")))
+```
+
+In your `config.el` add
+
+``` elisp
+(use-package! claude-shell
+  :config
+  (setq! claude-shell-api-token "sk-ant-api03-your-token"))
+```
 
 ## Usage
 
 To start a Claude Shell session, run:
-
 ```
 M-x claude-shell
 ```
 
-This will open a new buffer where you can interact with Claude. Type your queries and press `Enter` to send them to the AI assistant.
+This will open a new buffer where you can interact with Claude. Type your
+queries and press `Enter` to send them to the AI assistant.
 
-To swap the system prompt, use:
-
+To swap the system prompt press `C-x C-s` in the \*claude\* buffer, or call:
 ```
 M-x claude-shell-swap-system-prompt
 ```
 
 This allows you to choose from a list of predefined system prompts or set a custom one.
+
+You can load more prompts with
+```
+M-x claude-shell-load-awesome-prompts
+```
+
+To swap Claude models press `C-x C-v` in the \*claude\* buffer, or call:
+
+```
+M-x claude-shell-swap-model
+```
 
 ## Customization
 
