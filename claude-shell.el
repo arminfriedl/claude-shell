@@ -5,7 +5,7 @@
 ;; Author: Armin Friedl <dev@friedl.net>
 ;; Maintainer: Armin Friedl <dev@friedl.net>
 ;; Created: März 16, 2024
-;; Version: 0.0.3
+;; Version: 0.0.4
 ;; Keywords: anthropic claude claude-shell shell-maker terminals wp help tools
 ;; Homepage: https://github.com/arminfriedl/claude-shell
 ;; Package-Requires: ((emacs "29.1") (shell-maker "0.50.1"))
@@ -36,13 +36,13 @@
 
 ;;; Commentary:
 ;;
-;; `claude-shell' is a comint-based shell to interact with Antrophic's Claude
+;; `claude-shell' is a comint-based shell to interact with Anthrophic's Claude
 ;; AI. It is based on `shell-maker' providing a convenience layer on top of
 ;; comint. It strives to be similar in functionality and spirit to
 ;; `chatgpt-shell' (https://github.com/xenodium/chatgpt-shell) just for Claude
 ;; models.
 ;;
-;; `claude-shell' provides an interactive chat with Claude in a dedictated shell
+;; `claude-shell' provides an interactive chat with Claude in a dedicated shell
 ;; buffer. It also integrates with the rest of Emacs to allow seamlessly calling
 ;; out to Claude on-demand. Similar to the many AI copilots around.
 ;;
@@ -86,7 +86,7 @@ https://console.anthropic.com/settings/keys"
   :group 'claude-shell)
 
 (defcustom claude-shell-system-prompts
-  `(("tl;dr" . "Be as succint but informative as possible and respond in tl;dr form to my queries")
+  `(("tl;dr" . "Be as succinct but informative as possible and respond in tl;dr form to my queries")
     ("General" . "You use markdown liberally to structure responses. Always show code snippets in markdown blocks with language labels.")
     ;; Based on https://github.com/benjamin-asdf/dotfiles/blob/8fd18ff6bd2a1ed2379e53e26282f01dcc397e44/mememacs/.emacs-mememacs.d/init.el#L768
     ("Programming" . "The user is a programmer with very limited time.
