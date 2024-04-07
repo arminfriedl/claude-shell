@@ -1,5 +1,9 @@
 # claude-shell
 
+![GitHub License](https://img.shields.io/github/license/arminfriedl/claude-shell)
+[![MELPA](https://melpa.org/packages/claude-shell-badge.svg)](https://melpa.org/#/claude-shell)
+![Static Badge](https://img.shields.io/badge/Emacs-29.1-blue)
+
 Anthropic's [Claude](https://www.anthropic.com/claude) integration in Emacs
 based on [`shell-maker`](https://github.com/xenodium/chatgpt-shell/).
 
@@ -34,10 +38,6 @@ Sonnet is somewhere in the middle.
 - Syntax highlighting
 
 ## Installation
-
-This package is currently awaiting inclusion in Melpa. Until then you can
-install directly from this GitHub repo.
-
 `claude-shell` needs an API token from Anthropic. You can generate one in your
 account https://console.anthropic.com/settings/keys. This must be set to
 `claude-shell-api-token` either as string or a function to fetch the token.
@@ -59,12 +59,32 @@ account https://console.anthropic.com/settings/keys. This must be set to
    generate an API token in your Anthropic account settings:
    https://console.anthropic.com/settings/keys
 
+### `package.el`
+`claude-shell` is in [Melpa](https://melpa.org/#/claude-shell) and so installing
+via the built-in `package.el` is as simple as setting up Melpa [as package
+source](https://melpa.org/#/getting-started).
+
+Then you can use `M-x package-refresh-contents` and `M-x package-install` to
+install `claude-shell`.
+
 ### `straight.el` and `use-package`
 
 `claude-shell` can easily be installed with
 [straight.el](https://github.com/radian-software/straight.el) and
-[use-package](https://github.com/jwiegley/use-package).
+[use-package](https://github.com/jwiegley/use-package). 
 
+If you have Melpa in your [package sources](https://melpa.org/#/getting-started)
+already you can just install and configure the package as usual:
+``` elisp
+(use-package claude-shell
+  :straight (claude-shell :type git :host github :repo "arminfriedl/claude-shell")
+  :config
+  (setq claude-shell-api-token "sk-ant-api03-your-token"))
+
+```
+
+In case you don't have and don't want to add Melpa to your package sources you
+can also install it directly from source:
 ``` elisp
 (use-package claude-shell
   :straight (claude-shell :type git :host github :repo "arminfriedl/claude-shell")
