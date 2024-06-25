@@ -64,7 +64,8 @@
 (defvar claude-shell--models
   '(("claude-3-haiku-20240307" . "Fastest and most compact model for near-instant responsiveness.")
     ("claude-3-sonnet-20240229" . "Ideal balance of intelligence and speed for enterprise workloads.")
-    ("claude-3-opus-20240229" . "Most powerful model for highly complex tasks."))
+    ("claude-3-opus-20240229" . "Most powerful model for highly complex tasks.")
+    ("claude-3-5-sonnet-20240620" . "Most intelligent model."))
   "List of Anthropic's Claude models.
 
 See also
