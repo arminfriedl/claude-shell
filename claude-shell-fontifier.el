@@ -8,7 +8,7 @@
 ;; Version: 0.0.3
 ;; Keywords: anthropic claude claude-shell shell-maker terminals wp help tools
 ;; Homepage: https://github.com/arminfriedl/claude-shell
-;; Package-Requires: ((emacs "29.1") (shell-maker "0.50.1"))
+;; Package-Requires: ((emacs "29.1") (shell-maker "0.50.5"))
 ;;
 ;; This file is not part of GNU Emacs.
 
@@ -102,6 +102,7 @@ Objective-C -> (\"objective-c\" . \"objc\")"
                 (cons 'start start)
                 (cons 'end end)))))))
 
+;; TODO: Move to shell-maker.
 (defun claude-shell-fontifier--markdown-headers (&optional avoid-ranges)
   "Extract markdown headers with AVOID-RANGES."
   (let ((headers '())
@@ -128,6 +129,7 @@ Objective-C -> (\"objective-c\" . \"objc\")"
              headers)))))
     (nreverse headers)))
 
+;; TODO: Move to shell-maker.
 (defun claude-shell-fontifier--markdown-links (&optional avoid-ranges)
   "Extract markdown links with AVOID-RANGES."
   (let ((links '())
@@ -157,6 +159,7 @@ Objective-C -> (\"objective-c\" . \"objc\")"
              links)))))
     (nreverse links)))
 
+;; TODO: Move to shell-maker.
 (defun claude-shell-fontifier--markdown-bolds (&optional avoid-ranges)
   "Extract markdown bolds with AVOID-RANGES."
   (let ((bolds '())
@@ -184,6 +187,7 @@ Objective-C -> (\"objective-c\" . \"objc\")"
              bolds)))))
     (nreverse bolds)))
 
+;; TODO: Move to shell-maker.
 (defun claude-shell-fontifier--markdown-strikethroughs (&optional avoid-ranges)
   "Extract markdown strikethroughs with AVOID-RANGES."
   (let ((strikethroughs '())
@@ -208,6 +212,7 @@ Objective-C -> (\"objective-c\" . \"objc\")"
              strikethroughs)))))
     (nreverse strikethroughs)))
 
+;; TODO: Move to shell-maker.
 (defun claude-shell-fontifier--markdown-italics (&optional avoid-ranges)
   "Extract markdown italics with AVOID-RANGES."
   (let ((italics '())
@@ -240,6 +245,7 @@ Objective-C -> (\"objective-c\" . \"objc\")"
              italics)))))
     (nreverse italics)))
 
+;; TODO: Move to shell-maker.
 (defun claude-shell-fontifier--markdown-inline-codes (&optional avoid-ranges)
   "Get a list of all inline markdown code in buffer with AVOID-RANGES."
   (let ((codes '())
@@ -260,6 +266,7 @@ Objective-C -> (\"objective-c\" . \"objc\")"
               'body (cons (match-beginning 1) (match-end 1))) codes)))))
     (nreverse codes)))
 
+;; TODO: Move to shell-maker.
 (defvar claude-shell-fontifier--source-block-regexp
   (rx  bol (zero-or-more whitespace) (group "```") (zero-or-more whitespace) ;; ```
        (group (zero-or-more (or alphanumeric "-" "+"))) ;; language
@@ -269,6 +276,77 @@ Objective-C -> (\"objective-c\" . \"objc\")"
        (one-or-more "\n")
        (group "```") (or "\n" eol)))
 
+(defvar-local claude-shell-fontifier--is-primary-p nil)
+
+(defun claude-shell-fontifier-next-source-block ()
+  "Move point to previous source block."
+  (interactive)
+  (when-let
+      ((next-block
+        (save-excursion
+          (when-let ((current (claude-shell-fontifier-markdown-block-at-point)))
+            (goto-char (map-elt current 'end))
+            (end-of-line))
+          (when (re-search-forward claude-shell-fontifier--source-block-regexp nil t)
+            (claude-shell-fontifier--match-source-block)))))
+    (goto-char (car (map-elt next-block 'body)))))
+
+(defun claude-shell-fontifier-previous-item ()
+  "Go to previous item.
+
+Could be a prompt or a source block."
+  (interactive)
+  (unless (eq major-mode 'claude-shell-fontifier-mode)
+    (user-error "Not in a shell"))
+  (let ((prompt-pos (save-excursion
+                      (when (comint-next-prompt (- 1))
+                        (point))))
+        (block-pos (save-excursion
+                     (when (claude-shell-fontifier-previous-source-block)
+                       (point)))))
+    (cond ((and block-pos prompt-pos)
+           (goto-char (max prompt-pos
+                           block-pos)))
+          (block-pos
+           (goto-char block-pos))
+          (prompt-pos
+           (goto-char prompt-pos)))))
+
+(defun claude-shell-fontifier-next-item ()
+  "Go to next item.
+
+Could be a prompt or a source block."
+  (interactive)
+  (unless (eq major-mode 'claude-shell-fontifier-mode)
+    (user-error "Not in a shell"))
+  (let ((prompt-pos (save-excursion
+                      (when (comint-next-prompt 1)
+                        (point))))
+        (block-pos (save-excursion
+                     (when (claude-shell-fontifier-next-source-block)
+                       (point)))))
+    (cond ((and block-pos prompt-pos)
+           (goto-char (min prompt-pos
+                           block-pos)))
+          (block-pos
+           (goto-char block-pos))
+          (prompt-pos
+           (goto-char prompt-pos)))))
+
+(defun claude-shell-fontifier-previous-source-block ()
+  "Move point to previous source block."
+  (interactive)
+  (when-let
+      ((previous-block
+        (save-excursion
+          (when-let ((current (claude-shell-fontifier-markdown-block-at-point)))
+            (goto-char (map-elt current 'start))
+            (forward-line 0))
+          (when (re-search-backward claude-shell-fontifier--source-block-regexp nil t)
+            (claude-shell-fontifier--match-source-block)))))
+    (goto-char (car (map-elt previous-block 'body)))))
+
+;; TODO: Move to shell-maker.
 (defun claude-shell-fontifier--match-source-block ()
   "Return a matched source block by the previous search/regexp operation."
   (list
@@ -282,6 +360,7 @@ Objective-C -> (\"objective-c\" . \"objc\")"
                      (match-end 2)))
    'body (cons (match-beginning 3) (match-end 3))))
 
+;; TODO: Move to shell-maker.
 (defun claude-shell-fontifier--source-blocks ()
   "Get a list of all source blocks in buffer."
   (let ((markdown-blocks '())
@@ -308,16 +387,26 @@ For example \"elisp\" -> \"emacs-lisp\"."
                               "-mode"))
           (downcase (string-trim language))))))
 
+;; TODO: Move to shell-maker.
 (defun claude-shell-fontifier--fontify-source-block (quotes1-start quotes1-end lang
-                                                                   lang-start lang-end body-start body-end quotes2-start quotes2-end)
+lang-start lang-end body-start body-end quotes2-start quotes2-end)
   "Fontify a source block.
 Use QUOTES1-START QUOTES1-END LANG LANG-START LANG-END BODY-START
  BODY-END QUOTES2-START and QUOTES2-END."
-  ;; Hide ```
+  ;; Overlay beginning "```" with a copy block button.
   (overlay-put (make-overlay quotes1-start
-                             quotes1-end) 'invisible 'claude-shell-fontifier)
+                             quotes1-end)
+               'display
+               (propertize "📋 "
+                           'pointer 'hand
+                           'keymap (shell-maker--make-ret-binding-map
+                                    (lambda ()
+                                      (interactive)
+                                      (kill-ring-save body-start body-end)
+                                      (message "Copied")))))
+  ;; Hide end "```" altogether.
   (overlay-put (make-overlay quotes2-start
-                             quotes2-end) 'invisible 'claude-shell-fontifier)
+                             quotes2-end) 'invisible 'chatgpt-shell)
   (unless (eq lang-start lang-end)
     (overlay-put (make-overlay lang-start
                                lang-end) 'face '(:box t))
@@ -360,45 +449,56 @@ Use QUOTES1-START QUOTES1-END LANG LANG-START LANG-END BODY-START
       (overlay-put (make-overlay body-start body-end buf)
                    'face 'font-lock-doc-markup-face))))
 
+(defun claude-shell-fontifier--fontify-divider (start end)
+  "Display text between START and END as a divider."
+  (overlay-put (make-overlay start end
+                             (if (and (boundp 'shell-maker--config)
+                                      shell-maker--config)
+                                 (shell-maker-buffer shell-maker--config)
+                               (current-buffer)))
+               'display
+               (concat (propertize (concat (make-string (window-body-width) ? ) "")
+                                   'face '(:underline t)) "\n")))
+
 ;; TODO: Move to shell-maker.
 (defun claude-shell-fontifier--fontify-link (start end title-start title-end url-start url-end)
   "Fontify a markdown link.
 Use START END TITLE-START TITLE-END URL-START URL-END."
   ;; Hide markup before
-  (overlay-put (make-overlay start title-start) 'invisible 'claude-shell-fontifier)
+  (overlay-put (make-overlay start title-start) 'invisible 'chatgpt-shell)
   ;; Show title as link
   (overlay-put (make-overlay title-start title-end) 'face 'link)
   ;; Make RET open the URL
   (define-key (let ((map (make-sparse-keymap)))
                 (define-key map [mouse-1]
-                            (lambda () (interactive)
-                              (browse-url (buffer-substring-no-properties url-start url-end))))
+                  (lambda () (interactive)
+                    (browse-url (buffer-substring-no-properties url-start url-end))))
                 (define-key map (kbd "RET")
-                            (lambda () (interactive)
-                              (browse-url (buffer-substring-no-properties url-start url-end))))
+                  (lambda () (interactive)
+                    (browse-url (buffer-substring-no-properties url-start url-end))))
                 (overlay-put (make-overlay title-start title-end) 'keymap map)
                 map)
-              [remap self-insert-command] 'ignore)
+    [remap self-insert-command] 'ignore)
   ;; Hide markup after
-  (overlay-put (make-overlay title-end end) 'invisible 'claude-shell-fontifier))
+  (overlay-put (make-overlay title-end end) 'invisible 'chatgpt-shell))
 
 ;; TODO: Move to shell-maker.
 (defun claude-shell-fontifier--fontify-bold (start end text-start text-end)
   "Fontify a markdown bold.
 Use START END TEXT-START TEXT-END."
   ;; Hide markup before
-  (overlay-put (make-overlay start text-start) 'invisible 'claude-shell-fontifier)
+  (overlay-put (make-overlay start text-start) 'invisible 'chatgpt-shell)
   ;; Show title as bold
   (overlay-put (make-overlay text-start text-end) 'face 'bold)
   ;; Hide markup after
-  (overlay-put (make-overlay text-end end) 'invisible 'claude-shell-fontifier))
+  (overlay-put (make-overlay text-end end) 'invisible 'chatgpt-shell))
 
 ;; TODO: Move to shell-maker.
 (defun claude-shell-fontifier--fontify-header (start _end level-start level-end title-start title-end)
   "Fontify a markdown header.
 Use START END LEVEL-START LEVEL-END TITLE-START TITLE-END."
   ;; Hide markup before
-  (overlay-put (make-overlay start title-start) 'invisible 'claude-shell-fontifier)
+  (overlay-put (make-overlay start title-start) 'invisible 'chatgpt-shell)
   ;; Show title as header
   (overlay-put (make-overlay title-start title-end) 'face
                (cond ((eq (- level-end level-start) 1)
@@ -425,22 +525,22 @@ Use START END LEVEL-START LEVEL-END TITLE-START TITLE-END."
   "Fontify a markdown italic.
 Use START END TEXT-START TEXT-END."
   ;; Hide markup before
-  (overlay-put (make-overlay start text-start) 'invisible 'claude-shell-fontifier)
+  (overlay-put (make-overlay start text-start) 'invisible 'chatgpt-shell)
   ;; Show title as italic
   (overlay-put (make-overlay text-start text-end) 'face 'italic)
   ;; Hide markup after
-  (overlay-put (make-overlay text-end end) 'invisible 'claude-shell-fontifier))
+  (overlay-put (make-overlay text-end end) 'invisible 'chatgpt-shell))
 
 ;; TODO: Move to shell-maker.
 (defun claude-shell-fontifier--fontify-strikethrough (start end text-start text-end)
   "Fontify a markdown strikethrough.
 Use START END TEXT-START TEXT-END."
   ;; Hide markup before
-  (overlay-put (make-overlay start text-start) 'invisible 'claude-shell-fontifier)
+  (overlay-put (make-overlay start text-start) 'invisible 'chatgpt-shell)
   ;; Show title as strikethrough
   (overlay-put (make-overlay text-start text-end) 'face '(:strike-through t))
   ;; Hide markup after
-  (overlay-put (make-overlay text-end end) 'invisible 'claude-shell-fontifier))
+  (overlay-put (make-overlay text-end end) 'invisible 'chatgpt-shell))
 
 ;; TODO: Move to shell-maker.
 (defun claude-shell-fontifier--fontify-inline-code (body-start body-end)
@@ -449,9 +549,9 @@ Use QUOTES1-START QUOTES1-END LANG LANG-START LANG-END BODY-START
  BODY-END QUOTES2-START and QUOTES2-END."
   ;; Hide ```
   (overlay-put (make-overlay (1- body-start)
-                             body-start) 'invisible 'claude-shell-fontifier)
+                             body-start) 'invisible 'chatgpt-shell)
   (overlay-put (make-overlay body-end
-                             (1+ body-end)) 'invisible 'claude-shell-fontifier)
+                             (1+ body-end)) 'invisible 'chatgpt-shell)
   (overlay-put (make-overlay body-start body-end
                              (if (and (boundp 'shell-maker--config)
                                       shell-maker--config)
@@ -459,65 +559,108 @@ Use QUOTES1-START QUOTES1-END LANG LANG-START LANG-END BODY-START
                                (current-buffer)))
                'face 'font-lock-doc-markup-face))
 
+(defun claude-shell-fontifier-rename-block-at-point ()
+  "Rename block at point (perhaps a different language)."
+  (interactive)
+  (save-excursion
+    (if-let ((block (claude-shell-fontifier-markdown-block-at-point)))
+        (if (map-elt block 'language)
+            (perform-replace (map-elt block 'language)
+                             (read-string "Name: " nil nil "") nil nil nil nil nil
+                             (map-elt block 'language-start) (map-elt block 'language-end))
+          (let ((new-name (read-string "Name: " nil nil "")))
+            (goto-char (map-elt block 'language-start))
+            (insert new-name)
+            (claude-shell-fontifier--put-source-block-overlays)))
+      (user-error "No block at point"))))
 
+(defun claude-shell-fontifier-remove-block-overlays ()
+  "Remove block overlays.  Handy for renaming blocks."
+  (interactive)
+  (dolist (overlay (overlays-in (point-min) (point-max)))
+    (delete-overlay overlay)))
+
+(defun claude-shell-fontifier-refresh-rendering ()
+  "Refresh markdown rendering by re-applying to entire buffer."
+  (interactive)
+  (claude-shell-fontifier--put-source-block-overlays))
+
+;; TODO: Move to shell-maker.
 (defun claude-shell-fontifier--put-source-block-overlays ()
   "Put overlays for all source blocks."
-  (let* ((source-blocks (claude-shell-fontifier--source-blocks))
-         (avoid-ranges (seq-map (lambda (block)
-                                  (map-elt block 'body))
-                                source-blocks)))
-    (dolist (overlay (overlays-in (point-min) (point-max)))
-      (delete-overlay overlay))
-    (dolist (block source-blocks)
-      (claude-shell-fontifier--fontify-source-block
-       (car (map-elt block 'start))
-       (cdr (map-elt block 'start))
-       (buffer-substring-no-properties (car (map-elt block 'language))
-                                       (cdr (map-elt block 'language)))
-       (car (map-elt block 'language))
-       (cdr (map-elt block 'language))
-       (car (map-elt block 'body))
-       (cdr (map-elt block 'body))
-       (car (map-elt block 'end))
-       (cdr (map-elt block 'end))))
-    (dolist (link (claude-shell-fontifier--markdown-links avoid-ranges))
-      (claude-shell-fontifier--fontify-link
-       (map-elt link 'start)
-       (map-elt link 'end)
-       (car (map-elt link 'title))
-       (cdr (map-elt link 'title))
-       (car (map-elt link 'url))
-       (cdr (map-elt link 'url))))
-    (dolist (header (claude-shell-fontifier--markdown-headers avoid-ranges))
-      (claude-shell-fontifier--fontify-header
-       (map-elt header 'start)
-       (map-elt header 'end)
-       (car (map-elt header 'level))
-       (cdr (map-elt header 'level))
-       (car (map-elt header 'title))
-       (cdr (map-elt header 'title))))
-    (dolist (bold (claude-shell-fontifier--markdown-bolds avoid-ranges))
-      (claude-shell-fontifier--fontify-bold
-       (map-elt bold 'start)
-       (map-elt bold 'end)
-       (car (map-elt bold 'text))
-       (cdr (map-elt bold 'text))))
-    (dolist (italic (claude-shell-fontifier--markdown-italics avoid-ranges))
-      (claude-shell-fontifier--fontify-italic
-       (map-elt italic 'start)
-       (map-elt italic 'end)
-       (car (map-elt italic 'text))
-       (cdr (map-elt italic 'text))))
-    (dolist (strikethrough (claude-shell-fontifier--markdown-strikethroughs avoid-ranges))
-      (claude-shell-fontifier--fontify-strikethrough
-       (map-elt strikethrough 'start)
-       (map-elt strikethrough 'end)
-       (car (map-elt strikethrough 'text))
-       (cdr (map-elt strikethrough 'text))))
-    (dolist (inline-code (claude-shell-fontifier--markdown-inline-codes avoid-ranges))
-      (claude-shell-fontifier--fontify-inline-code
-       (car (map-elt inline-code 'body))
-       (cdr (map-elt inline-code 'body))))))
+  (when claude-shell-fontifier-highlight-blocks
+    (let* ((source-blocks (claude-shell-fontifier--source-blocks))
+           (avoid-ranges (seq-map (lambda (block)
+                                    (map-elt block 'body))
+                                  source-blocks)))
+      (dolist (overlay (overlays-in (point-min) (point-max)))
+        (delete-overlay overlay))
+      (dolist (block source-blocks)
+        (claude-shell-fontifier--fontify-source-block
+         (car (map-elt block 'start))
+         (cdr (map-elt block 'start))
+         (buffer-substring-no-properties (car (map-elt block 'language))
+                                         (cdr (map-elt block 'language)))
+         (car (map-elt block 'language))
+         (cdr (map-elt block 'language))
+         (car (map-elt block 'body))
+         (cdr (map-elt block 'body))
+         (car (map-elt block 'end))
+         (cdr (map-elt block 'end))))
+      (when claude-shell-fontifier-insert-dividers
+        (dolist (divider (shell-maker--prompt-end-markers))
+          (claude-shell-fontifier--fontify-divider (car divider) (cdr divider))))
+      (dolist (link (claude-shell-fontifier--markdown-links avoid-ranges))
+        (claude-shell-fontifier--fontify-link
+         (map-elt link 'start)
+         (map-elt link 'end)
+         (car (map-elt link 'title))
+         (cdr (map-elt link 'title))
+         (car (map-elt link 'url))
+         (cdr (map-elt link 'url))))
+      (dolist (header (claude-shell-fontifier--markdown-headers avoid-ranges))
+        (claude-shell-fontifier--fontify-header
+         (map-elt header 'start)
+         (map-elt header 'end)
+         (car (map-elt header 'level))
+         (cdr (map-elt header 'level))
+         (car (map-elt header 'title))
+         (cdr (map-elt header 'title))))
+      (dolist (bold (claude-shell-fontifier--markdown-bolds avoid-ranges))
+        (claude-shell-fontifier--fontify-bold
+         (map-elt bold 'start)
+         (map-elt bold 'end)
+         (car (map-elt bold 'text))
+         (cdr (map-elt bold 'text))))
+      (dolist (italic (claude-shell-fontifier--markdown-italics avoid-ranges))
+        (claude-shell-fontifier--fontify-italic
+         (map-elt italic 'start)
+         (map-elt italic 'end)
+         (car (map-elt italic 'text))
+         (cdr (map-elt italic 'text))))
+      (dolist (strikethrough (claude-shell-fontifier--markdown-strikethroughs avoid-ranges))
+        (claude-shell-fontifier--fontify-strikethrough
+         (map-elt strikethrough 'start)
+         (map-elt strikethrough 'end)
+         (car (map-elt strikethrough 'text))
+         (cdr (map-elt strikethrough 'text))))
+      (dolist (inline-code (claude-shell-fontifier--markdown-inline-codes avoid-ranges))
+        (claude-shell-fontifier--fontify-inline-code
+         (car (map-elt inline-code 'body))
+         (cdr (map-elt inline-code 'body)))))))
+
+;; TODO: Move to shell-maker.
+(defun claude-shell-fontifier--unpaired-length (length)
+  "Expand LENGTH to include paired responses.
+
+Each request has a response, so double LENGTH if set.
+
+Add one for current request (without response).
+
+If no LENGTH set, use 2048."
+  (if length
+      (1+ (* 2 length))
+    2048))
 
 (provide 'claude-shell-fontifier)
 ;;; claude-shell-fontifier.el ends here
