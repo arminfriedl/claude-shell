@@ -131,6 +131,11 @@ For example:
   :type 'boolean
   :group 'claude-shell)
 
+(defcustom claude-shell-fontifier-highlight-blocks t
+  "Whether or not to highlight source blocks."
+  :type 'boolean
+  :group 'claude-shell)
+
 (defcustom claude-shell-after-command-functions nil
   "Abnormal hook (i.e. with parameters) invoked after each command.
 
