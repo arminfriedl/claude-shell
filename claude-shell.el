@@ -299,6 +299,18 @@ interpretation."
                (format "Error: %s" .error.message)))
            ""))))
 
+(defun claude-shell--preprocess-claude-response (response)
+  "Preprocess RESPONSE to remove unparseable items."
+  (replace-regexp-in-string
+   (rx (| (: bol "data:")
+          (: bol (| "event: message_start"
+                    "event: content_block_start"
+                    "event: content_block_stop"
+                    "event: message_delta"
+                    "event: message_stop"
+                    "event: ping"
+                    "event: content_block_delta") (*? anychar) eol)))"" response))
+
 (defvar claude-shell--config
   (make-shell-maker-config
    :name "Claude"
@@ -320,7 +332,8 @@ or
       claude-shell-streaming
       #'claude-shell--extract-claude-response
       callback
-      error-callback))
+      error-callback
+      #'claude-shell--preprocess-claude-response))
    :on-command-finished
    (lambda (command output)
      (claude-shell-fontifier--put-source-block-overlays)
@@ -334,17 +347,6 @@ or
                                    output)
        output))))
 
-(defun claude-shell--shell-maker-preparse-json-advice (args)
-  "Test ARGS."
-  (list (replace-regexp-in-string (rx bol (| "event: message_start"
-                                             "event: content_block_start"
-                                             "event: content_block_stop"
-                                             "event: message_delta"
-                                             "event: message_stop"
-                                             "event: ping"
-                                             "event: content_block_delta") (*? anychar) eol)
-                                  "" (car args))))
-
 ;;;###autoload
 (defun claude-shell ()
   "Start a Claude shell."
@@ -356,9 +358,7 @@ or
     (define-key claude-shell-mode-map (kbd "C-c C-v")
                 #'claude-shell-swap-model)
     (define-key claude-shell-mode-map (kbd "C-c C-s")
-                #'claude-shell-swap-system-prompt))
-
-  (add-function :filter-args (symbol-function 'shell-maker--preparse-json) #'claude-shell--shell-maker-preparse-json-advice))
+                #'claude-shell-swap-system-prompt)))
 
 (provide 'claude-shell)
 ;;; claude-shell.el ends here
