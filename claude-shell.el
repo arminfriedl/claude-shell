@@ -299,18 +299,6 @@ interpretation."
                (format "Error: %s" .error.message)))
            ""))))
 
-(defun claude-shell--preprocess-claude-response (response)
-  "Preprocess RESPONSE to remove unparseable items."
-  (replace-regexp-in-string
-   (rx (| (: bol "data:")
-          (: bol (| "event: message_start"
-                    "event: content_block_start"
-                    "event: content_block_stop"
-                    "event: message_delta"
-                    "event: message_stop"
-                    "event: ping"
-                    "event: content_block_delta") (*? anychar) eol)))"" response))
-
 (defvar claude-shell--config
   (make-shell-maker-config
    :name "Claude"
@@ -346,6 +334,18 @@ or
                                    "SK-REDACTED-ANTHROPIC-KEY"
                                    output)
        output))))
+
+(defun claude-shell--preprocess-claude-response (response)
+  "Preprocess RESPONSE to remove unparseable items."
+  (replace-regexp-in-string
+   (rx (| (: bol "data:")
+          (: bol (| "event: message_start"
+                    "event: content_block_start"
+                    "event: content_block_stop"
+                    "event: message_delta"
+                    "event: message_stop"
+                    "event: ping"
+                    "event: content_block_delta") (*? anychar) eol)))"" response))
 
 ;;;###autoload
 (defun claude-shell ()
