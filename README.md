@@ -1,3 +1,11 @@
+> [!WARNING]
+> Claude is now a proper part of the `chatgpt-shell`
+> (https://github.com/xenodium/chatgpt-shell) package.
+>
+> This is likely the last version of `claude-shell` that will be published
+> before this repository is archived. Please migrate over to `chatgpt-shell` and
+> let's concentrate our efforts there ;)
+
 # claude-shell
 
 ![GitHub License](https://img.shields.io/github/license/arminfriedl/claude-shell)
